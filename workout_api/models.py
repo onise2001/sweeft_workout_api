@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 class Excercise(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
-    instructions = models.TextField()
     target_muscle = models.CharField(max_length=100)
     steps = models.JSONField(default=list)
 
@@ -40,8 +39,8 @@ class WorkoutSession(models.Model):
 
 
 class WorkoutExercise(models.Model):
-    exercise = models.ForeignKey(Excercise, on_delete=models.CASCADE)
-    workout = models.ForeignKey(WorkoutSession, on_delete=models.CASCADE)
+    exercise = models.ForeignKey(Excercise, on_delete=models.CASCADE, related_name='workout_exercises')
+    workout = models.ForeignKey(WorkoutSession, on_delete=models.CASCADE, related_name="exercises")
     sets = models.IntegerField(blank=True, null=True)
     reps = models.IntegerField(blank=True, null=True)
     duration = models.DurationField(blank=True, null=True)  
