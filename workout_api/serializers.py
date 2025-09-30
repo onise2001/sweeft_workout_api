@@ -55,6 +55,10 @@ class ProgressEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = ProgressEntry
         fields = '__all__'
+
+    
+    def create(self, validated_data):
+        ...
     
 
 
