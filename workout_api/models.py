@@ -33,6 +33,7 @@ class WorkoutSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     session_duration = models.DurationField(blank=True, null=True)
     workout_days = models.JSONField(default=list)  
+    start_time = models.TimeField(blank=True, null=True)
 
 
     
@@ -49,3 +50,33 @@ class WorkoutExercise(models.Model):
     weight = models.FloatField(null=True, blank=True)  
     order = models.PositiveIntegerField()
 
+
+
+
+
+class ProgressTracker(models.Model):
+    GOAL_TYPES = (
+        ('weight', 'Weight'),
+        ('exercise', 'Eexercise')
+    )
+
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    goal_type = models.CharField(max_length=50, choices=GOAL_TYPES)
+    exercise = models.ForeignKey(Excercise, on_delete=models.CASCADE, null=True, blank=True)
+    start_value = models.FloatField()
+    target_value = models.FloatField()
+    current_value = models.FloatField(null=True, blank=True)
+    value_unit = models.CharField(max_length=20)
+    start_date = models.DateField(auto_now_add=True)
+    target_date = models.DateField()
+    achieved = models.BooleanField(default=False)
+
+
+
+
+class ProgressEntry(models.Model):
+    tracker = models.ForeignKey(ProgressTracker, on_delete=models.CASCADE, related_name='entries')
+    date = models.DateField(auto_now_add=True)
+    value = models.FloatField()
+    notes = models.TextField(blank=True, null=True)
