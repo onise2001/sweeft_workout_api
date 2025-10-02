@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Exercise, WorkoutSession, WorkoutExercise, ProgressTracker, ProgressEntry, ExerciseStep
+from .models import Exercise, WorkoutSession, WorkoutExercise, ProgressTracker, ProgressEntry, ExerciseStep, ActiveWorkout, ExerciseCompletion
 
 
 
@@ -149,3 +149,58 @@ class ProgressTrackerSerializer(serializers.ModelSerializer):
 
 
 
+class ActiveWorkoutSerializer(serializers.ModelSerializer):
+    workout = WorkoutSessionSerializer(read_only=True)
+    workout_id = serializers.PrimaryKeyRelatedField(
+        queryset=WorkoutSession.objects.none(),
+        write_only=True,
+        source='workout'   
+    )
+
+    class Meta:
+        model = ActiveWorkout
+        fields = '__all__'
+        extra_kwargs = {
+            "user": {"read_only": True},
+            "start_time": {"read_only": True},
+            "end_time": {"read_only": True},
+            "completed": {"read_only": True},
+            "is_active": {"read_only": True},
+        }
+
+
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.hasattr(request, 'user'):
+            self.fields['workout_id'].queryset = WorkoutSession.objects.filter(user=request.user)
+
+        
+    
+    def get_current_exercise(self,obj):
+        exercises = obj.workout.exercises.order_by('order')
+        if obj.current_exercise_index < len(exercises):
+            return WorkoutExerciseSerializer(exercises[obj.current_exercise_index]).data
+        return None
+    
+    def get_next_exercise(self,obj):
+        exercises = obj.workout.exercises.order_by('order')
+        if obj.current_exercise_index + 1 < len(exercises):
+            return WorkoutExerciseSerializer(exercises[obj.current_exercise_index + 1]).data
+        return None
+    
+
+    def get_progress(self,obj):
+        total = obj.workout.exercises.count()
+        return {
+            'completed': obj.current_exercise_index,
+            'total': total,
+            'percentage': (obj.current_exercise_index / total * 100) if total > 0 else 0
+        }
+    
+
+
+class ExerciseCompletionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExerciseCompletion
+        fields = '__all__'

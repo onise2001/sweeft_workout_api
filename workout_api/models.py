@@ -84,3 +84,24 @@ class ProgressEntry(models.Model):
     date = models.DateField(auto_now_add=True)
     value = models.FloatField()
     notes = models.TextField(blank=True, null=True)
+
+
+
+
+class ActiveWorkout(models.Model):
+    workout = models.ForeignKey(WorkoutSession, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    start_time = models.DateTimeField(auto_now_add=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    current_exercise_index = models.IntegerField(default=0)
+
+
+
+class ExerciseCompletion(models.Model):
+    active_workout = models.ForeignKey(ActiveWorkout, on_delete=models.CASCADE, related_name='completed_exercises')
+    workout_exercise = models.ForeignKey(WorkoutExercise, on_delete=models.CASCADE, related_name='completions')
+    completed_sets = models.IntegerField()
+    completed_reps = models.IntegerField()
+    notes = models.TextField(blank=True, null=True)
+
