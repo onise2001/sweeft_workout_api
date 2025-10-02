@@ -4,16 +4,20 @@ from django.contrib.auth.models import User
 # Create your models here.
 
 
-class Excercise(models.Model):
+class Exercise(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     target_muscle = models.CharField(max_length=100)
-    steps = models.JSONField(default=list)
 
     def __str__(self):
         return self.name
-    
 
+
+
+class ExerciseStep(models.Model):
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name='exercise_steps')
+    step_number = models.PositiveIntegerField()
+    instruction = models.TextField()
 
 
 
@@ -40,7 +44,7 @@ class WorkoutSession(models.Model):
 
 
 class WorkoutExercise(models.Model):
-    exercise = models.ForeignKey(Excercise, on_delete=models.CASCADE, related_name='workout_exercises')
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name='workout_exercises')
     workout = models.ForeignKey(WorkoutSession, on_delete=models.CASCADE, related_name="exercises")
     sets = models.IntegerField(blank=True, null=True)
     reps = models.IntegerField(blank=True, null=True)
@@ -63,7 +67,7 @@ class ProgressTracker(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     goal_type = models.CharField(max_length=50, choices=GOAL_TYPES)
-    exercise = models.ForeignKey(Excercise, on_delete=models.CASCADE, null=True, blank=True)
+    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, null=True, blank=True)
     start_value = models.FloatField()
     target_value = models.FloatField()
     current_value = models.FloatField(null=True, blank=True)

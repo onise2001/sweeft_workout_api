@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from workout_api.models import Excercise
+from workout_api.models import Exercise, ExerciseStep
 
 
 exercises = [
@@ -214,12 +214,19 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         for exercise_data in exercises:
-            Excercise.objects.get_or_create(
+            exercise = Exercise.objects.get_or_create(
                 name=exercise_data['name'],
                 defaults={
                     'description': exercise_data['description'],
-                    'target_muscle': exercise_data['target_muscle'],
-                    'steps': exercise_data['steps']
+                    'target_muscle': exercise_data['target_muscle']
                 }
             )
+
+            for step in exercise_data['steps']:
+                ExerciseStep.objects.get_or_create(
+                    exercise=exercise[0],
+                    step_number=step['step'],
+                    instruction=step['instruction']
+                )
+
         self.stdout.write(self.style.SUCCESS('Successfully seeded exercises'))
