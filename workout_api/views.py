@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
+from drf_yasg.utils import swagger_auto_schema
 # Create your views here.
 
 
@@ -62,15 +63,65 @@ class ProgressEntryViewSet(ModelViewSet):
     serializer_class = ProgressEntrySerializer
     permission_classes = [IsAuthenticated, IsOwnerOfTracker]
 
+    @swagger_auto_schema(
+        operation_description="List all workout sessions for the authenticated user",
+        responses={200: WorkoutSessionSerializer(many=True)}
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Create a new workout session",
+        request_body=WorkoutSessionSerializer,
+        responses={
+            201: WorkoutSessionSerializer,
+            400: "Bad Request - Invalid data provided"
+        }
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Retrieve a specific workout session",
+        responses={
+            200: WorkoutSessionSerializer,
+            404: "Not Found - Workout session does not exist"
+        }
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Update a workout session",
+        request_body=WorkoutSessionSerializer,
+        responses={
+            200: WorkoutSessionSerializer,
+            400: "Bad Request - Invalid data provided",
+            404: "Not Found - Workout session does not exist"
+        }
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_description="Delete a workout session",
+        responses={
+            204: "No Content - Successfully deleted",
+            404: "Not Found - Workout session does not exist"
+        }
+    )
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
     def get_queryset(self):
-        return ProgressEntry.objects.filter(tracker__user=self.request.user)
+        return WorkoutSession.objects.filter(user=self.request.user)
 
 
 
 class ActiveWorkoutViewSet(ModelViewSet):
     serializer_class = ActiveWorkoutSerializer
     permission_classes = [IsAuthenticated]
-    allwed_methods = ['get', 'post', 'head', 'options']
+    http_method_names = ['get', 'post', 'head', 'options']
 
     def get_queryset(self):
         return ActiveWorkout.objects.filter(user=self.request.user, is_active=True)
@@ -78,7 +129,6 @@ class ActiveWorkoutViewSet(ModelViewSet):
     
     @action(detail=False, methods=['post'])
     def start_workout(self,request):
-
         if ActiveWorkout.objects.filter(user=request.user, is_active=True).exists():
             return Response({"detail": "You already have an active workout."}, status=status.HTTP_400_BAD_REQUEST)
 
