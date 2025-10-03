@@ -60,6 +60,7 @@ source venv/bin/activate  # Linux
 
 # Dependencies and setup
 pip install -r requirements.txt
+python manage.py collectstatic
 python manage.py migrate
 python manage.py seed_exercises
 python manage.py runserver
