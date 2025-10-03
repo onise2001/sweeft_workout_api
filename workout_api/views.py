@@ -8,6 +8,7 @@ from .permissions import IsOwnerOfTracker
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from django.utils import timezone
 # Create your views here.
 
 
@@ -56,6 +57,7 @@ class ProgressTrackerViewSet(ModelViewSet):
             permission_classes = [IsAuthenticated, IsOwnerOfTracker]
         return [permission() for permission in permission_classes]
 
+
 class ProgressEntryViewSet(ModelViewSet):
     serializer_class = ProgressEntrySerializer
     permission_classes = [IsAuthenticated, IsOwnerOfTracker]
@@ -68,26 +70,32 @@ class ProgressEntryViewSet(ModelViewSet):
 class ActiveWorkoutViewSet(ModelViewSet):
     serializer_class = ActiveWorkoutSerializer
     permission_classes = [IsAuthenticated]
+    allwed_methods = ['get', 'post', 'head', 'options']
 
     def get_queryset(self):
-        return ActiveWorkout.objects.filter(user=self.request.user)
+        return ActiveWorkout.objects.filter(user=self.request.user, is_active=True)
     
-    def perform_create(self,serializer):
-        serializer.save(user=self.request.user)
+    
+    @action(detail=False, methods=['post'])
+    def start_workout(self,request):
 
-    
-    @action(detail=True, methods=['post'])
-    def start_workout(self,request, pk=None):
-        workout_session = get_object_or_404(WorkoutSession, pk=pk, user=request.user)
+        if ActiveWorkout.objects.filter(user=request.user, is_active=True).exists():
+            return Response({"detail": "You already have an active workout."}, status=status.HTTP_400_BAD_REQUEST)
+
+        workout_session_id = request.data.get('workout_session_id')
+        workout_session = get_object_or_404(WorkoutSession, pk=workout_session_id, user=request.user)
         active_workout = ActiveWorkout.objects.create(workout=workout_session, user=request.user)
         serializer = self.get_serializer(active_workout)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
 
     @action(detail=True, methods=['post'])
-    def complete_exercise(self, request, pk=None):
+    def complete_exercise(self, request,pk=None):
         active_workout = self.get_object()
-        serializer = ExerciseCompletionSerializer(data=request.data)
+        serializer = ExerciseCompletionSerializer(
+            data=request.data,
+                context={"request":request, "active_workout": active_workout}
+        )
 
         if serializer.is_valid():
             serializer.save(active_workout=active_workout)
@@ -101,3 +109,16 @@ class ActiveWorkoutViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    @action(detail=True, methods=['get'])
+    def current_exercise(self, request, pk=None):
+        active_workout = self.get_object()
+        current_exercise = self.get_serializer(active_workout).get_current_exercise(active_workout)
+        next_exercise = self.get_serializer(active_workout).get_next_exercise(active_workout)
+        progress = self.get_serializer(active_workout).get_progress(active_workout)
+        return Response({
+            'current_exercise': current_exercise,
+            'next_exercise': next_exercise,
+            'progress': progress
+        }, status=status.HTTP_200_OK)

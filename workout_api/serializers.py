@@ -65,7 +65,7 @@ class WorkoutExerciseSerializer(serializers.ModelSerializer):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         request = self.context.get('request')
-        if request and request.hasattr(request, 'user'):
+        if request and request.user.is_authenticated:
             self.fields['workout_id'].queryset = WorkoutSession.objects.filter(user=request.user)
 
         
@@ -80,7 +80,6 @@ class WorkoutSessionSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def create(self,validated_data):
-        print(validated_data)
         exercises_data = validated_data.pop('exercises')
         user = self.context['request'].user
         workout_session = WorkoutSession.objects.create(user=user,**validated_data)
@@ -89,6 +88,20 @@ class WorkoutSessionSerializer(serializers.ModelSerializer):
                 del exercise_data['workout_id']
             WorkoutExercise.objects.create(workout=workout_session, **exercise_data)
         return workout_session
+    
+
+    def validate(self, data):
+        days = data.get('workout_days', [])
+        valid_days = [day[0] for day in WorkoutSession.DAYS_OF_WEEK]  
+
+        for day in days:
+            if day not in valid_days:
+                raise serializers.ValidationError(f"Invalid day: {day}. Valid days are: {', '.join(valid_days)}")
+
+        # Automatically remove duplicates 
+        days = set(data.get('workout_days', []))
+        data['workout_days'] = list(days)
+        return data
 
 
 
@@ -172,7 +185,7 @@ class ActiveWorkoutSerializer(serializers.ModelSerializer):
     def __init__(self,*args, **kwargs):
         super().__init__(*args, **kwargs)
         request = self.context.get('request')
-        if request and request.hasattr(request, 'user'):
+        if request and request.user.is_authenticated:
             self.fields['workout_id'].queryset = WorkoutSession.objects.filter(user=request.user)
 
         
@@ -201,6 +214,26 @@ class ActiveWorkoutSerializer(serializers.ModelSerializer):
 
 
 class ExerciseCompletionSerializer(serializers.ModelSerializer):
+    active_workout = serializers.PrimaryKeyRelatedField(read_only=True) 
+    workout_exercise = serializers.PrimaryKeyRelatedField(read_only=True)
+    workout_exercise_id = serializers.PrimaryKeyRelatedField(
+        queryset=WorkoutExercise.objects.none(),
+        write_only=True,
+        source='workout_exercise'
+    )
+    
     class Meta:
         model = ExerciseCompletion
         fields = '__all__'
+
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        active_workout = self.context.get('active_workout')
+
+        print(active_workout)
+        
+        if active_workout:
+            print(WorkoutExercise.objects.filter(workout=active_workout.workout).order_by('order'))
+            self.fields['workout_exercise_id'].queryset = WorkoutExercise.objects.filter(workout=active_workout.workout).order_by('order')

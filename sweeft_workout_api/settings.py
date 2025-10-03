@@ -75,7 +75,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'sweeft_workout_api.wsgi.application'
 
 SIMPLE_JWT = {
-    'AUTH_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
 }
 
 
