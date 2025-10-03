@@ -44,7 +44,14 @@ docker compose up -d
 # Clone and setup
 git clone https://github.com/onise2001/sweeft_workout_api.git
 cd sweeft_workout_api
+```
+- Create a '.env' file (not tracked in git) and populate it according to .env.example or the following:
+```
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+```
 
+```bash
 # Virtual environment
 python -m venv venv
 source venv/bin/activate  # Linux
