@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.viewsets import ModelViewSet
 from .models import Exercise, WorkoutSession, WorkoutExercise, ProgressTracker, ProgressEntry, ActiveWorkout,ExerciseCompletion
-from .serializers import ExcerciseSerializer, WorkoutSessionSerializer, WorkoutExerciseSerializer, ProgressTrackerSerializer, ProgressEntrySerializer, ActiveWorkoutSerializer, ExerciseCompletionSerializer
+from .serializers import ExerciseSerializer, WorkoutSessionSerializer, WorkoutExerciseSerializer, ProgressTrackerSerializer, ProgressEntrySerializer, ActiveWorkoutSerializer, ExerciseCompletionSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from .permissions import IsOwnerOfTracker
@@ -24,7 +24,7 @@ class WorkoutSessionViewSet(ModelViewSet):
 
 class ExerciseViewSet(ModelViewSet):
     queryset = Exercise.objects.all()
-    serializer_class = ExcerciseSerializer
+    serializer_class = ExerciseSerializer
     http_method_names = ['get', 'head', 'options']
 
 

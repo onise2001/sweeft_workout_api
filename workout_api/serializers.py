@@ -12,7 +12,7 @@ class ExerciseStepSerializer(serializers.ModelSerializer):
 
 
 
-class ExcerciseSerializer(serializers.ModelSerializer):
+class ExerciseSerializer(serializers.ModelSerializer):
     exercise_steps = ExerciseStepSerializer(many=True)
 
     class Meta:
@@ -37,7 +37,7 @@ class ExcerciseSerializer(serializers.ModelSerializer):
 
 
 class WorkoutExerciseSerializer(serializers.ModelSerializer):
-    exercise = ExcerciseSerializer(read_only=True)
+    exercise = ExerciseSerializer(read_only=True)
     exercise_id = serializers.PrimaryKeyRelatedField(
         queryset=Exercise.objects.all(),
         write_only=True,
@@ -136,7 +136,7 @@ class ProgressEntrySerializer(serializers.ModelSerializer):
 
 class ProgressTrackerSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
-    exercise = ExcerciseSerializer(read_only=True)
+    exercise = ExerciseSerializer(read_only=True)
     exercise_id = serializers.PrimaryKeyRelatedField(
         queryset=Exercise.objects.all(),
         write_only=True,
@@ -232,8 +232,6 @@ class ExerciseCompletionSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         active_workout = self.context.get('active_workout')
 
-        print(active_workout)
         
         if active_workout:
-            print(WorkoutExercise.objects.filter(workout=active_workout.workout).order_by('order'))
             self.fields['workout_exercise_id'].queryset = WorkoutExercise.objects.filter(workout=active_workout.workout).order_by('order')
